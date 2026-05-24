@@ -1,16 +1,23 @@
 #include "game.h"
 #include "player.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
+
+#define MAX_ENEMIES 100
 
 extern Player player;
-extern unsigned long timer;
+extern int loop_delta;
+
 const int ROWS = 20;
 const int COLS = 2 * ROWS;
 const char PLAYER_CHAR = 'x';
 const unsigned long time_limit = 10;
+const int level = 100;
+
+unsigned long timer;
+time_t now;
 
 int score = 0;
 
@@ -28,31 +35,61 @@ void input_hook(char c) {
 typedef struct Enemy {
   int x;
   int y;
-  bool exists;
 } Enemy;
 
-Enemy enemies[255];
+Enemy enemies[MAX_ENEMIES];
+int cur = 0;
 
 void spawn_enemy(void) {
-  
+  for (int i = 0; i < cur; ++i) {
+    enemies[i].y++;
+    if (enemies[i].y >= ROWS) {
+      enemies[i].y = 0;
+      enemies[i].x = rand() % COLS;
+    }
+  }
+
+  Enemy enemy = {rand() % COLS, 0};
+  enemies[cur++] = enemy;
 }
 
 void game_hook(char arr[ROWS][COLS + 1]) {
   printf("score: %d\n", score);
-  printf("%lu seconds remaining\n", time_limit - timer);
+
   arr[player.y][player.x] = PLAYER_CHAR;
 
-  if (player.y == coin.y && player.x == coin.x) {
-    coin.exists = false;
-    score++;
+  for (int i = 0; i < cur; ++i) {
+    Enemy cur_enemy = enemies[i];
+    arr[cur_enemy.y][cur_enemy.x] = 'o';
+
+    if (cur_enemy.y == player.y && cur_enemy.x == player.x)
+      stop();
   }
-  
-  arr[coin.y][coin.x] = 'o';
+
+  int level;
+  if (score > 20) {
+    level = 100;
+  } else if (score > 10) {
+    level = 500;
+  } else {
+    level = 1000;
+  }
+
+  if (loop_delta % level == 0) {
+    spawn_enemy();
+
+    for (int i = 0; i < cur; ++i) {
+      Enemy cur_enemy = enemies[i];
+
+      if (cur_enemy.y == player.y && cur_enemy.x != player.x)
+        score++;
+    }
+  }
 }
 
 void setup() {
   player.x = COLS / 2;
-  player.y = ROWS - 3;  
+  player.y = ROWS - 3;
 }
 
 void teardown() {

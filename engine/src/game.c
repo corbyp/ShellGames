@@ -104,8 +104,6 @@ void game_loop(void) {
 
 // start stop
 
-#include <stdlib.h>
-
 void start(void) {
   signal(SIGINT, signalHandler);
   printf("\e[?25l");

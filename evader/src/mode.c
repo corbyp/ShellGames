@@ -1,97 +1,75 @@
+#include "entity.h"
 #include "game.h"
-#include "player.h"
+#include "map.h"
 
-#include <stdbool.h>
+#include <stdbool.h> // included in entity.h
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdlib.h> // for rand
 
-#define MAX_ENEMIES 100
+#define MAX_ENEMIES 5000
 
-extern Player player;
-extern int loop_delta;
+// necessary definitions
+const Map map = (Map){21, 41, '#', '#', '#', '#', '#', '#', '#', '#', ' '};
 
-const int ROWS = 20;
-const int COLS = 2 * ROWS;
-const char PLAYER_CHAR = 'x';
-const unsigned long time_limit = 10;
-const int level = 100;
-
-unsigned long timer;
-time_t now;
-
+// own logic
 int score = 0;
+int count = 0;
+
+Entity player = {map.COLS / 2, map.ROWS - 2, '@', true, true, true};
+Entity enemies[MAX_ENEMIES];
+
+void move_enemies() {
+  for (int i = 0; i < count; ++i) {
+    bool wall_collision = move_down(&enemies[i], map.ROWS);
+
+    if (wall_collision) {
+      score++;
+      enemies[i].y = 0;
+      enemies[i].x = rand() % (map.COLS - 1);
+    }
+  }
+}
+
+// necessary definitions
+
+void setup() { add_entity(&player); }
+
+void teardown(char arr[map.ROWS][map.COLS + 1], Game game) {
+  (void) arr;
+  printf("You scored %d points in %lu seconds\n", score, game.timer);
+}
+
+void process(char arr[map.ROWS][map.COLS + 1], Game game) {
+  printf("score: %d\n", score);
+  printf("timer: %lu\n", game.timer);
+
+  if (game.loop_delta % 5 == 0) {
+    move_enemies();
+  }
+
+  if (game.loop_delta % 60 == 0) {
+    if (count < MAX_ENEMIES) {
+      enemies[count] = (Entity){rand() % (map.COLS - 1), 0, 'o', true, true, true};
+      add_entity(&enemies[count]);
+      count++;
+    }
+  }
+
+  for (int i = 0; i < count; ++i) {
+    if (collide(&enemies[i], &player)) {
+      arr[player.y][player.x] = 'x';
+      stop();
+    }
+  }
+}
 
 void input_hook(char c) {
   switch (c) {
   case 'a':
-    player.left(&player);
+    move_left(&player, 0);
     break;
   case 'd':
-    player.right(&player);
+    move_right(&player, map.COLS);
     break;
   }
-}
-
-typedef struct Enemy {
-  int x;
-  int y;
-} Enemy;
-
-Enemy enemies[MAX_ENEMIES];
-int cur = 0;
-
-void spawn_enemy(void) {
-  for (int i = 0; i < cur; ++i) {
-    enemies[i].y++;
-    if (enemies[i].y >= ROWS) {
-      enemies[i].y = 0;
-      enemies[i].x = rand() % COLS;
-    }
-  }
-
-  Enemy enemy = {rand() % COLS, 0};
-  enemies[cur++] = enemy;
-}
-
-void game_hook(char arr[ROWS][COLS + 1]) {
-  printf("score: %d\n", score);
-
-  arr[player.y][player.x] = PLAYER_CHAR;
-
-  for (int i = 0; i < cur; ++i) {
-    Enemy cur_enemy = enemies[i];
-    arr[cur_enemy.y][cur_enemy.x] = 'o';
-
-    if (cur_enemy.y == player.y && cur_enemy.x == player.x)
-      stop();
-  }
-
-  int level;
-  if (score > 20) {
-    level = 100;
-  } else if (score > 10) {
-    level = 500;
-  } else {
-    level = 1000;
-  }
-
-  if (loop_delta % level == 0) {
-    spawn_enemy();
-
-    for (int i = 0; i < cur; ++i) {
-      Enemy cur_enemy = enemies[i];
-
-      if (cur_enemy.y == player.y && cur_enemy.x != player.x)
-        score++;
-    }
-  }
-}
-
-void setup() {
-  player.x = COLS / 2;
-  player.y = ROWS - 3;
-}
-
-void teardown() {
-  printf("You scored %d points in %lu seconds\n", score, time_limit);
 }

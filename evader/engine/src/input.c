@@ -1,12 +1,15 @@
+// input.c
 #include "input.h"
+#include "game.h"
 
+#include <fcntl.h>
+#include <linux/input.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <sys/select.h>
 #include <termios.h>
 #include <unistd.h>
 
-extern bool running;
-extern bool verbose;
 extern void input_hook(char c);
 
 char getch() {
@@ -30,22 +33,19 @@ char getch() {
 }
 
 void *input_loop(void *_) {
-  char cur;
+  (void)_;
+  char c;
 
-  while (running) {
-    cur = getch();
-
-    switch (cur) {
-      case 'q':
-        running = false;
-        break;
-      case 'v':
-        verbose = !verbose;
-        break;
+  while (true) {
+    c = getch();
+    switch (c) {
+    case 'q':
+      stop();
+      break;
+    case 'v':
+      toggle_verbose();
+      break;
     }
-
-    input_hook(cur);
+    input_hook(c);
   }
-
-  return NULL;
 }

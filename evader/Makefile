@@ -1,6 +1,6 @@
-INCLUDE = include/
+INCLUDE = engine/include
 TEST_FILES = $(wildcard tests/*.c)
-C_FILES = $(wildcard src/*.c)
+C_FILES = $(wildcard src/*.c engine/src/*.c)
 TARGET = app
 
 CFLAGS = -I$(INCLUDE) -Wall -Wextra

@@ -1,32 +1,30 @@
 #include "game.h"
-#include "player.h"
+#include "entity.h"
+#include "map.h"
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdbool.h>
+#include <stdint.h>
 
-extern Player player;
-extern unsigned long timer;
-const int ROWS = 20;
-const int COLS = 2 * ROWS;
-const char PLAYER_CHAR = 'x';
-const unsigned long time_limit = 10;
-
-int score = 0;
+static const Map map = (Map) {21, 41, '#', '#', '#', '#', '#', '#', '#', '#', ' '};
+static Entity player = {0, 0, '@', true, true, true};
+static const uint8_t time_limit = 10;
+static int score = 0;
 
 void input_hook(char c) {
   switch (c) {
   case 'w':
-    player.up(&player);
+    move_up(&player, 0);
     break;
   case 's':
-    player.down(&player);
+    move_down(&player, map.ROWS);
     break;
   case 'a':
-    player.left(&player);
+    move_left(&player, 0);
     break;
   case 'd':
-    player.right(&player);
+    move_right(&player, map.COLS);
     break;
   }
 }
@@ -40,19 +38,19 @@ typedef struct Coin {
 Coin coin = {0, 0, false};
 
 void spawn_coin() {
-  coin.x = rand() % COLS;
-  coin.y = rand() % ROWS;
+  coin.x = rand() % map.COLS;
+  coin.y = rand() % map.ROWS;
 
   coin.exists = true;
 }
 
-void game_hook(char arr[ROWS][COLS + 1]) {
-  if (timer > time_limit)
+void process(char arr[map.ROWS][map.COLS + 1], Game game) {
+  if (game.timer > time_limit)
     stop();
 
   printf("score: %d\n", score);
-  printf("%lu seconds remaining\n", time_limit - timer);
-  arr[player.y][player.x] = PLAYER_CHAR;
+  printf("%lu seconds remaining\n", time_limit - game.timer);
+  arr[player.y][player.x] = player.icon;
 
   if (player.y == coin.y && player.x == coin.x) {
     coin.exists = false;
@@ -69,6 +67,6 @@ void setup() {
   
 }
 
-void teardown() {
+void teardown(Game game) {
   printf("You scored %d points in %lu seconds\n", score, time_limit);
 }

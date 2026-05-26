@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-static const Map map = (Map) {21, 41, '#', '#', '#', '#', '#', '#', '#', '#', ' '};
+const Map map = (Map) {21, 41, '#', '#', '#', '#', '#', '#', '#', '#', ' '};
 static Entity player = {0, 0, '@', true, true, true};
 static const uint8_t time_limit = 10;
 static int score = 0;
@@ -68,5 +68,6 @@ void setup() {
 }
 
 void teardown(Game game) {
-  printf("You scored %d points in %lu seconds\n", score, time_limit);
+  (void)game;
+  printf("You scored %d points in %d seconds\n", score, time_limit);
 }

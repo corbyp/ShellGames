@@ -2,6 +2,7 @@
 #include "entity.h"
 #include "input.h"
 
+#include <bits/time.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -26,19 +27,15 @@ typedef struct Map {
   char BACKGROUND;
 } Map;
 
-
 static bool running = true;
 static bool verbose = false;
 
-static uint8_t count = 0;
-static int old_timer = 0;
-static uint8_t fps;
 static Map map = {21, 41, '#', '#', '#', '#', '#', '#', '#', '#', ' '};
 
 // user defined
 extern void setup(void);
-extern void process(char arr[map.ROWS][map.COLS], Game game);
-extern void teardown(char arr[map.ROWS][map.COLS], Game game);
+extern void process(Game game);
+extern void teardown(Game game);
 
 void signalHandler(int sig) {
   (void)sig;
@@ -80,6 +77,10 @@ void draw_grid(char arr[map.ROWS][map.COLS + 1]) {
 }
 
 void draw_verbose(Game game) {
+  static uint8_t count;
+  static int old_timer;
+  static uint8_t fps;
+
   ++count;
   if (old_timer != game.timer) {
     fps = count;
@@ -88,6 +89,22 @@ void draw_verbose(Game game) {
   }
   if (verbose)
     printf("Current FPS: %d\n", fps);
+}
+
+void fix_fps(struct timespec start, struct timespec end) {
+  long elapsed = (end.tv_sec - start.tv_sec) * 1000000 +
+                 (end.tv_nsec - start.tv_nsec) / 1000;
+  printf("Elapsed: %ld µs\n", elapsed);
+
+  // 60 fps = 60 frames / 1 s
+  // 60 fps = 60 frames / 1000 ms
+  // 60 fps = 60 frames / 1.000.000 µs
+  // 60 fps = 6 frames / 100.000 µs
+
+  // usleep(16667 - elapsed); // ~60fps
+  usleep(10000 -
+         elapsed); // 100fps since every loop waits for 10.000 µs and thus
+  // there is a loop every 10 ms which equivilates to 100 loops / s
 }
 
 // external api
@@ -99,25 +116,32 @@ void game_loop(void) {
   Game game = {0, 0};
   char arr[map.ROWS][map.COLS + 1];
   set_bounds(0, map.ROWS, 0, map.COLS);
+  struct timespec start, end;
   time_t now = time(0);
 
   while (running) {
-    printf("\e[H\e[J"); // deletes previous frame
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
-    game.loop_delta = (game.loop_delta + 1) % 60; // 0 every 60th loop
+    game.loop_delta =
+        (game.loop_delta + 1) % 1000; // resets every 1000th loop or every ms
     game.timer = time(0) - now;
+
+    process(game);
 
     fill_grid(arr, map.BACKGROUND);
     add_entities(arr);
 
-    process(arr, game);
-
     draw_grid(arr);
     draw_verbose(game);
-    usleep(16450); // ~60fps
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    fix_fps(start, end);
+    printf("\e[H\e[J"); // deletes previous frame
   }
 
-  teardown(arr, game);
+  teardown(game);
+  draw_grid(arr);
+  draw_verbose(game);
 }
 
 // start stop
@@ -139,14 +163,15 @@ void stop(void) { running = false; }
 
 void toggle_verbose(void) { verbose = !verbose; }
 
-void set_char(char c, int x, int y) {}
-
 void set_map_dims(const int rows, const int cols) {
   map.ROWS = rows;
   map.COLS = cols;
 }
 
-void set_map_chars(const char top, const char bottom, const char left, const char right, const char top_left, const char top_right, const char bottom_left, const char bottom_right, const char background) {
+void set_map_chars(const char top, const char bottom, const char left,
+                   const char right, const char top_left, const char top_right,
+                   const char bottom_left, const char bottom_right,
+                   const char background) {
   map.TOP = top;
   map.BOTTOM = bottom;
   map.LEFT = left;

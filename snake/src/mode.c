@@ -11,7 +11,7 @@
 static int ROWS = 21;
 static int COLS = 41;
 static Entity player[MAX_SCORE] = {
-    {0, 0, NONE, '@', true, true, true, true},
+    {0, 0, NONE, '@', true, true, true},
 };
 static Entity coin = {0, 0, NONE, 'o', true, true, true};
 
@@ -73,7 +73,7 @@ bool trail_collision(void) {
   return false;
 }
 
-void process(char arr[ROWS][COLS + 1], Game game) {
+void process(Game game) {
   printf("score: %d\n", score);
   printf("time: %d seconds\n", game.timer);
 
@@ -82,7 +82,9 @@ void process(char arr[ROWS][COLS + 1], Game game) {
     prev_y = player[0].y;
 
     if (trail_collision() || safe_move(&player[0])) {
-      arr[player[0].y][player[0].x] = 'x';
+      Entity dead = {player[0].x, player[0].y, NONE, 'x', false, false, false};
+      // player[0].icon = 'x';
+      add_entity(&dead);
       stop();
       return;
     }
@@ -108,6 +110,5 @@ void setup() {
 }
 
 void teardown(Game game) {
-  (void)game;
   printf("You scored %d points in %d seconds\n", score, game.timer);
 }

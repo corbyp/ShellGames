@@ -1,7 +1,6 @@
 #include "game.h"
 #include "entity.h"
 #include "input.h"
-#include "map.h"
 
 #include <pthread.h>
 #include <signal.h>
@@ -11,11 +10,32 @@
 #include <string.h>
 #include <unistd.h>
 
+typedef struct Map {
+  int ROWS;
+  int COLS;
+
+  char TOP;
+  char BOTTOM;
+  char LEFT;
+  char RIGHT;
+  char TOP_LEFT;
+  char TOP_RIGHT;
+  char BOTTOM_LEFT;
+  char BOTTOM_RIGHT;
+
+  char BACKGROUND;
+} Map;
+
+
 static bool running = true;
 static bool verbose = false;
 
+static uint8_t count = 0;
+static int old_timer = 0;
+static uint8_t fps;
+static Map map = {21, 41, '#', '#', '#', '#', '#', '#', '#', '#', ' '};
+
 // user defined
-extern Map map;
 extern void setup(void);
 extern void process(char arr[map.ROWS][map.COLS], Game game);
 extern void teardown(char arr[map.ROWS][map.COLS], Game game);
@@ -25,7 +45,6 @@ void signalHandler(int sig) {
   stop();
 }
 
-// internal
 void add_entities(char arr[map.ROWS][map.COLS + 1]) {
   for (int i = 0; i < entity_count(); ++i) {
     Entity cur_entity = get_entity(i);
@@ -60,10 +79,6 @@ void draw_grid(char arr[map.ROWS][map.COLS + 1]) {
   printf("%s\n", horizontal);
 }
 
-static uint8_t count = 0;
-static unsigned long old_timer = 0;
-static  uint8_t fps;
-
 void draw_verbose(Game game) {
   ++count;
   if (old_timer != game.timer) {
@@ -75,12 +90,15 @@ void draw_verbose(Game game) {
     printf("Current FPS: %d\n", fps);
 }
 
+// external api
+
 // game loop
 void game_loop(void) {
   setup();
 
-  Game game = {0, 0, map.ROWS, map.COLS};
+  Game game = {0, 0};
   char arr[map.ROWS][map.COLS + 1];
+  set_bounds(0, map.ROWS, 0, map.COLS);
   time_t now = time(0);
 
   while (running) {
@@ -120,3 +138,22 @@ void start(void) {
 void stop(void) { running = false; }
 
 void toggle_verbose(void) { verbose = !verbose; }
+
+void set_char(char c, int x, int y) {}
+
+void set_map_dims(const int rows, const int cols) {
+  map.ROWS = rows;
+  map.COLS = cols;
+}
+
+void set_map_chars(const char top, const char bottom, const char left, const char right, const char top_left, const char top_right, const char bottom_left, const char bottom_right, const char background) {
+  map.TOP = top;
+  map.BOTTOM = bottom;
+  map.LEFT = left;
+  map.RIGHT = right;
+  map.TOP_LEFT = top_left;
+  map.TOP_RIGHT = top_right;
+  map.BOTTOM_LEFT = bottom_left;
+  map.BOTTOM_RIGHT = bottom_right;
+  map.BACKGROUND = background;
+}

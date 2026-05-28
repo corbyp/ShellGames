@@ -1,7 +1,7 @@
 ENGINE_INCLUDE = engine/include
 ENGINE_FILES = $(wildcard engine/src/*.c)
 
-GAMES := evader collector
+GAMES := evader collector snake
 GAME_FILES = $(wildcard $(GAME)/src/*.c)
 TARGET = $(GAME)d
 

@@ -1,73 +1,58 @@
-#include "game.h"
 #include "entity.h"
-#include "map.h"
+#include "game.h"
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-const Map map = (Map) {21, 41, '#', '#', '#', '#', '#', '#', '#', '#', ' '};
-static Entity player = {0, 0, '@', true, true, true};
-static const uint8_t time_limit = 10;
-static int score = 0;
+const int ROWS = 21, COLS = 41;
+static const uint8_t score_limit = 10;
+static Entity player = {0, 0, NONE, '@', true, true, true};
+static Entity coin = {0, 0, NONE, 'o', true, true, true};
+static uint8_t score = 0;
 
 void input_hook(char c) {
   switch (c) {
   case 'w':
-    move_up(&player, 0);
+    player.direction = UP;
     break;
   case 's':
-    move_down(&player, map.ROWS);
+    player.direction = DOWN;
     break;
   case 'a':
-    move_left(&player, 0);
+    player.direction = LEFT;
     break;
   case 'd':
-    move_right(&player, map.COLS);
+    player.direction = RIGHT;
     break;
   }
+  safe_move(&player);
 }
 
-typedef struct Coin {
-  int x;
-  int y;
-  bool exists;
-} Coin;
-
-Coin coin = {0, 0, false};
-
-void spawn_coin() {
-  coin.x = rand() % map.COLS;
-  coin.y = rand() % map.ROWS;
-
-  coin.exists = true;
+void move_coin() {
+  coin.x = rand() % COLS;
+  coin.y = rand() % ROWS;
 }
 
-void process(char arr[map.ROWS][map.COLS + 1], Game game) {
-  if (game.timer > time_limit)
+void process(char arr[ROWS][COLS + 1], Game game) {
+  printf("score: %d / %d\n", score, score_limit);
+  printf("time: %d seconds\n", game.timer);
+
+  if (score >= score_limit)
     stop();
 
-  printf("score: %d\n", score);
-  printf("%lu seconds remaining\n", time_limit - game.timer);
-  arr[player.y][player.x] = player.icon;
-
-  if (player.y == coin.y && player.x == coin.x) {
-    coin.exists = false;
-    score++;
+  if (collide(&player, &coin)) {
+    move_coin();
+    ++score;
   }
-  
-  if (!coin.exists)
-    spawn_coin();
-  
-  arr[coin.y][coin.x] = 'o';
 }
 
 void setup() {
-  
+  add_entity(&player);
+  add_entity(&coin);
 }
 
-void teardown(Game game) {
-  (void)game;
-  printf("You scored %d points in %d seconds\n", score, time_limit);
+void teardown(char arr[ROWS][COLS + 1], Game game) {
+  printf("You scored %d points in %d seconds\n", score, game.timer);
 }

@@ -121,6 +121,7 @@ void game_loop(void) {
 
   while (running) {
     clock_gettime(CLOCK_MONOTONIC, &start);
+    printf("\e[H\e[J"); // deletes previous frame
 
     game.loop_delta =
         (game.loop_delta + 1) % 1000; // resets every 1000th loop or every ms
@@ -136,12 +137,9 @@ void game_loop(void) {
 
     clock_gettime(CLOCK_MONOTONIC, &end);
     fix_fps(start, end);
-    printf("\e[H\e[J"); // deletes previous frame
   }
 
   teardown(game);
-  draw_grid(arr);
-  draw_verbose(game);
 }
 
 // start stop

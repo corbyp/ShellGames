@@ -8,12 +8,10 @@
 
 #define MAX_SCORE 100
 
-static int ROWS = 21;
-static int COLS = 41;
 static Entity player[MAX_SCORE] = {
-    {0, 0, RIGHT, '@', true, true, true},
+    {0, 0, RIGHT, '@', true, true},
 };
-static Entity coin = {0, 0, NONE, 'o', true, true, true};
+static Entity coin = {0, 0, NONE, 'o', true, true};
 
 static uint8_t score = 0;
 
@@ -31,9 +29,12 @@ char last_c;
 
 void input_hook(char c) { last_c = c; }
 
-void move_coin() {
-  coin.x = rand() % COLS;
-  coin.y = rand() % ROWS;
+void move_coin(int rows, int cols) {
+  coin.y = rand() % rows;
+  coin.x = rand() % cols;
+
+  // for (int i = 0; i < score; ++i) {
+  // }
 }
 
 bool trail_collision(void) {
@@ -46,13 +47,14 @@ bool trail_collision(void) {
   return false;
 }
 
-void process(Game game) {
+void process(Game *game) {
   printf("score: %d\n", score);
-  printf("time: %d seconds\n", game.timer);
+  printf("time: %d seconds\n", (*game).timer);
+  printf("x: %d y: %d\n", coin.x, coin.y);
   static int prev_x;
   static int prev_y;
 
-  if (game.loop_delta % 20 == 0) {
+  if ((*game).loop_delta % 20 == 0) {
     switch (last_c) {
     case 'w':
       if (player[0].direction != DOWN) {
@@ -83,9 +85,9 @@ void process(Game game) {
     prev_y = player[0].y;
 
     if (trail_collision() || safe_move(&player[0])) {
-      // Entity dead = {player[0].x, player[0].y, NONE, 'x', false, false,
-      // false}; add_entity(&dead);
-      player[0].icon = 'x';
+      player[score + 1] = (Entity){
+          player[0].x, player[0].y, NONE, 'X', true, true};
+      add_entity(&player[score + 1]);
       stop();
       return;
     }
@@ -94,22 +96,22 @@ void process(Game game) {
   }
 
   if (collide(&player[0], &coin)) {
-    move_coin();
+    move_coin((*game).rows, (*game).cols);
     if (score < MAX_SCORE - 1) {
       player[score + 1] = (Entity){
-          player[score].x, player[score].y, NONE, 'O', true, true, true};
+          player[score].x, player[score].y, NONE, 'O', true, true};
       add_entity(&player[score + 1]);
     }
     ++score;
   }
 }
 
-void setup() {
-  move_coin();
+void setup(Game *game) {
+  move_coin((*game).rows, (*game).cols);
   add_entity(&player[0]);
   add_entity(&coin);
 }
 
-void teardown(Game game) {
-  printf("You scored %d points in %d seconds\n", score, game.timer);
+void teardown(Game *game) {
+  printf("You scored %d points in %d seconds\n", score, (*game).timer);
 }

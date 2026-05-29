@@ -4,45 +4,35 @@
 
 #include <bits/time.h>
 #include <pthread.h>
-#include <signal.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
-typedef struct Map {
-  int ROWS;
-  int COLS;
-
-  char TOP;
-  char BOTTOM;
-  char LEFT;
-  char RIGHT;
-  char TOP_LEFT;
-  char TOP_RIGHT;
-  char BOTTOM_LEFT;
-  char BOTTOM_RIGHT;
-
-  char BACKGROUND;
-} Map;
-
 static bool running = true;
 static bool verbose = false;
 
-static Map map = {21, 41, '#', '#', '#', '#', '#', '#', '#', '#', ' '};
+static Game game = {.loop_delta = 0,
+                    .timer = 0,
+                    .rows = 21,
+                    .cols = 41,
+                    .top = '#',
+                    .bottom = '#',
+                    .left = '#',
+                    .right = '#',
+                    .top_left = '#',
+                    .top_right = '#',
+                    .bottom_left = '#',
+                    .bottom_right = '#',
+                    .background = ' '};
 
 // user defined
-extern void setup(void);
-extern void process(Game game);
-extern void teardown(Game game);
+extern void setup(Game *game);
+extern void process(Game *game);
+extern void teardown(Game *game);
 
-void signalHandler(int sig) {
-  (void)sig;
-  stop();
-}
-
-void add_entities(char arr[map.ROWS][map.COLS + 1]) {
+void add_entities(char arr[game.rows][game.cols + 1]) {
   for (int i = 0; i < entity_count(); ++i) {
     Entity cur_entity = get_entity(i);
     arr[cur_entity.y][cur_entity.x] = cur_entity.icon;
@@ -51,28 +41,28 @@ void add_entities(char arr[map.ROWS][map.COLS + 1]) {
 
 // grid
 
-void fill_grid(char arr[map.ROWS][map.COLS + 1], char c) {
-  for (int i = 0; i < map.ROWS; ++i) {
-    memset(arr[i], c, map.COLS);
-    arr[i][map.COLS] = 0;
+void fill_grid(char arr[game.rows][game.cols + 1], char c) {
+  for (int i = 0; i < game.rows; ++i) {
+    memset(arr[i], c, game.cols);
+    arr[i][game.cols] = 0;
   }
 }
 
-void draw_grid(char arr[map.ROWS][map.COLS + 1]) {
-  char horizontal[map.COLS + 3];
-  memset(horizontal, map.TOP, map.COLS + 1);
-  horizontal[0] = map.TOP_LEFT;
-  horizontal[map.COLS + 1] = map.TOP_RIGHT;
-  horizontal[map.COLS + 2] = 0;
+void draw_grid(char arr[game.rows][game.cols + 1]) {
+  char horizontal[game.cols + 3];
+  memset(horizontal, game.top, game.cols + 1);
+  horizontal[0] = game.top_left;
+  horizontal[game.cols + 1] = game.top_right;
+  horizontal[game.cols + 2] = 0;
   printf("%s\n", horizontal);
 
-  for (int i = 0; i < map.ROWS; ++i)
-    printf("%c%s%c\n", map.LEFT, arr[i], map.RIGHT);
+  for (int i = 0; i < game.rows; ++i)
+    printf("%c%s%c\n", game.left, arr[i], game.right);
 
-  memset(horizontal, map.BOTTOM, map.COLS + 1);
-  horizontal[0] = map.BOTTOM_LEFT;
-  horizontal[map.COLS + 1] = map.BOTTOM_RIGHT;
-  horizontal[map.COLS + 2] = 0;
+  memset(horizontal, game.bottom, game.cols + 1);
+  horizontal[0] = game.bottom_left;
+  horizontal[game.cols + 1] = game.bottom_right;
+  horizontal[game.cols + 2] = 0;
   printf("%s\n", horizontal);
 }
 
@@ -111,11 +101,10 @@ void fix_fps(struct timespec start, struct timespec end) {
 
 // game loop
 void game_loop(void) {
-  setup();
+  setup(&game);
 
-  Game game = {0, 0};
-  char arr[map.ROWS][map.COLS + 1];
-  set_bounds(0, map.ROWS, 0, map.COLS);
+  char arr[game.rows][game.cols + 1];
+  set_bounds(0, game.rows, 0, game.cols);
   struct timespec start, end;
   time_t now = time(0);
 
@@ -127,9 +116,9 @@ void game_loop(void) {
         (game.loop_delta + 1) % 1000; // resets every 1000th loop or every ms
     game.timer = time(0) - now;
 
-    process(game);
+    process(&game);
 
-    fill_grid(arr, map.BACKGROUND);
+    fill_grid(arr, game.background);
     add_entities(arr);
 
     draw_grid(arr);
@@ -139,13 +128,12 @@ void game_loop(void) {
     fix_fps(start, end);
   }
 
-  teardown(game);
+  teardown(&game);
 }
 
 // start stop
 
 void start(void) {
-  signal(SIGINT, signalHandler);
   printf("\e[?25l");
   pthread_t input;
   pthread_create(&input, NULL, input_loop, NULL);
@@ -154,29 +142,11 @@ void start(void) {
 
   pthread_cancel(input);
   pthread_join(input, NULL);
+}
+
+void stop(void) {
+  running = false;
   printf("\e[?25h");
 }
 
-void stop(void) { running = false; }
-
 void toggle_verbose(void) { verbose = !verbose; }
-
-void set_map_dims(const int rows, const int cols) {
-  map.ROWS = rows;
-  map.COLS = cols;
-}
-
-void set_map_chars(const char top, const char bottom, const char left,
-                   const char right, const char top_left, const char top_right,
-                   const char bottom_left, const char bottom_right,
-                   const char background) {
-  map.TOP = top;
-  map.BOTTOM = bottom;
-  map.LEFT = left;
-  map.RIGHT = right;
-  map.TOP_LEFT = top_left;
-  map.TOP_RIGHT = top_right;
-  map.BOTTOM_LEFT = bottom_left;
-  map.BOTTOM_RIGHT = bottom_right;
-  map.BACKGROUND = background;
-}

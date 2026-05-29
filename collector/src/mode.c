@@ -6,10 +6,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const int ROWS = 21, COLS = 41;
 static const uint8_t score_limit = 10;
-static Entity player = {0, 0, NONE, '@', true, true, true};
-static Entity coin = {0, 0, NONE, 'o', true, true, true};
+static Entity player = {0, 0, NONE, '@', true, true};
+static Entity coin = {0, 0, NONE, 'o', true, true};
 static uint8_t score = 0;
 
 void input_hook(char c) {
@@ -30,29 +29,30 @@ void input_hook(char c) {
   safe_move(&player);
 }
 
-void move_coin() {
-  coin.x = rand() % COLS;
-  coin.y = rand() % ROWS;
+void move_coin(int rows, int cols) {
+  coin.y = rand() % rows;
+  coin.x = rand() % cols;
 }
 
-void process(char arr[ROWS][COLS + 1], Game game) {
+void process(Game *game) {
   printf("score: %d / %d\n", score, score_limit);
-  printf("time: %d seconds\n", game.timer);
+  printf("time: %d seconds\n", (*game).timer);
 
   if (score >= score_limit)
     stop();
 
   if (collide(&player, &coin)) {
-    move_coin();
+    move_coin((*game).rows, (*game).cols);
     ++score;
   }
 }
 
-void setup() {
+void setup(Game *game) {
+  (void)game;
   add_entity(&player);
   add_entity(&coin);
 }
 
-void teardown(char arr[ROWS][COLS + 1], Game game) {
-  printf("You scored %d points in %d seconds\n", score, game.timer);
+void teardown(Game *game) {
+  printf("You scored %d points in %d seconds\n", score, (*game).timer);
 }

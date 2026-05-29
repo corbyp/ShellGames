@@ -20,11 +20,9 @@ typedef struct Entity {
 
   bool visible;
   bool collision;
-  bool persistent;
-
 } Entity;
 
-void move(Entity *entity);
+void move_entity(Entity *entity);
 bool safe_move(Entity *entity);
 void set_bounds(int top, int bottom, int left, int right);
 bool collide(Entity *entity1, Entity *entity2);

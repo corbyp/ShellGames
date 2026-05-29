@@ -86,3 +86,10 @@ bool collide(Entity *entity1, Entity *entity2) {
 
   return false;
 }
+
+bool collide_any(Entity *entity, Entity **entities, int size) {
+  for (int i = 0; i < size; ++i)
+    if ((*entity).x == (*entities[i]).x && (*entity).y == (*entities[i]).y)
+      return true;
+  return false;
+}

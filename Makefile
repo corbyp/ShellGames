@@ -1,7 +1,7 @@
 ENGINE_INCLUDE = engine/include
 ENGINE_FILES = $(wildcard engine/src/*.c)
 
-GAMES := evader collector snake
+GAMES := evader collector snake jnr
 GAME_FILES = $(wildcard $(GAME)/src/*.c)
 TARGET = $(GAME)d
 
@@ -16,10 +16,10 @@ all: run
 
 # production
 compile:
-	$(CC) $(CFLAGS_RELEASE) $(GAME_FILES) $(ENGINE_FILES) -o $(TARGET)
+	$(CC) $(CFLAGS_RELEASE) $(GAME_FILES) $(ENGINE_FILES) -o bin/$(TARGET)
 
 exec:
-	./$(TARGET)
+	bin/$(TARGET)
 
 # debug
 dcompile:

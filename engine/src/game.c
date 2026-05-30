@@ -66,7 +66,7 @@ void draw_grid(char arr[game.rows][game.cols + 1]) {
   printf("%s\n", horizontal);
 }
 
-void draw_verbose(Game game) {
+void draw_verbose(long elapsed) {
   static uint8_t count;
   static int old_timer;
   static uint8_t fps;
@@ -77,15 +77,14 @@ void draw_verbose(Game game) {
     count = 0;
     old_timer = game.timer;
   }
-  if (verbose)
+  if (verbose) {
+    printf("time: %d seconds\n", game.timer);
     printf("Current FPS: %d\n", fps);
+    printf("Elapsed: %ld µs\n", elapsed);
+  }
 }
 
-void fix_fps(struct timespec start, struct timespec end) {
-  long elapsed = (end.tv_sec - start.tv_sec) * 1000000 +
-                 (end.tv_nsec - start.tv_nsec) / 1000;
-  printf("Elapsed: %ld µs\n", elapsed);
-
+void fix_fps(long elapsed) {
   // 60 fps = 60 frames / 1 s
   // 60 fps = 60 frames / 1000 ms
   // 60 fps = 60 frames / 1.000.000 µs
@@ -122,10 +121,12 @@ void game_loop(void) {
     add_entities(arr);
 
     draw_grid(arr);
-    draw_verbose(game);
 
     clock_gettime(CLOCK_MONOTONIC, &end);
-    fix_fps(start, end);
+    long elapsed = (end.tv_sec - start.tv_sec) * 1000000 +
+                   (end.tv_nsec - start.tv_nsec) / 1000;
+    draw_verbose(elapsed);
+    fix_fps(elapsed);
   }
 
   teardown(&game);

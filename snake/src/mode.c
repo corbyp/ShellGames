@@ -25,9 +25,17 @@ void move_trail(int prev_x, int prev_y) {
   player[1].y = prev_y;
 }
 
-char last_c;
+bool w = false;
+bool a = false;
+bool s = false;
+bool d = false;
 
-void input_hook(char c) { last_c = c; }
+void input_hook(int keys[], int size) {
+  w = keys[17];
+  a = keys[30];
+  s = keys[31];
+  d = keys[32];
+}
 
 void move_coin(int rows, int cols) {
   coin.y = rand() % rows;
@@ -55,38 +63,40 @@ void process(Game *game) {
   static int prev_y;
 
   if ((*game).loop_delta % 20 == 0) {
-    switch (last_c) {
-    case 'w':
+    if (w) {
       if (player[0].direction != DOWN) {
         player[0].icon = '^';
         player[0].direction = UP;
       }
-      break;
-    case 's':
-      if (player[0].direction != UP) {
-        player[0].icon = 'v';
-        player[0].direction = DOWN;
-      }
-      break;
-    case 'a':
+    }
+
+    if (a) {
       if (player[0].direction != RIGHT) {
         player[0].icon = '<';
         player[0].direction = LEFT;
       }
-      break;
-    case 'd':
+    }
+
+    if (s) {
+      if (player[0].direction != UP) {
+        player[0].icon = 'v';
+        player[0].direction = DOWN;
+      }
+    }
+
+    if (d) {
       if (player[0].direction != LEFT) {
         player[0].icon = '>';
         player[0].direction = RIGHT;
       }
-      break;
     }
+
     prev_x = player[0].x;
     prev_y = player[0].y;
 
     if (trail_collision() || safe_move(&player[0])) {
-      player[score + 1] = (Entity){
-          player[0].x, player[0].y, NONE, 'X', true, true};
+      player[score + 1] =
+          (Entity){player[0].x, player[0].y, NONE, 'X', true, true};
       add_entity(&player[score + 1]);
       stop();
       return;
@@ -98,8 +108,8 @@ void process(Game *game) {
   if (collide(&player[0], &coin)) {
     move_coin((*game).rows, (*game).cols);
     if (score < MAX_SCORE - 1) {
-      player[score + 1] = (Entity){
-          player[score].x, player[score].y, NONE, 'O', true, true};
+      player[score + 1] =
+          (Entity){player[score].x, player[score].y, NONE, 'O', true, true};
       add_entity(&player[score + 1]);
     }
     ++score;

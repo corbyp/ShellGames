@@ -8,13 +8,13 @@
 #include <unistd.h>
 
 #include <fcntl.h>
-#include <linux/input.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <linux/input.h>
 
-extern void input_hook(int keys[]);
+extern void input_hook(int keys[], int size);
 
-#define KEYBOARD "/dev/input/event23" // adjust this for your keyboard
+#define KEYBOARD "/dev/input/event2"
 
 void *input_loop(void *_) {
   int fd = open(KEYBOARD, O_RDONLY);
@@ -34,12 +34,14 @@ void *input_loop(void *_) {
         keys[ev.code] = 1; // key down
       else if (ev.value == 0)
         keys[ev.code] = 0; // key up
-      // ev.value == 2 is key repeat, ignore for game input
 
-      // Example: check WASD
-      input_hook(keys);
-      // printf("W:%d A:%d S:%d D:%d\n", keys[KEY_W], keys[KEY_A], keys[KEY_S],
-      //        keys[KEY_D]);
+      if (keys[KEY_Q])
+        stop();
+
+      if (keys[KEY_V])
+        toggle_verbose();
+      
+      input_hook(keys, KEY_MAX);
     }
   }
 

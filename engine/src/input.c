@@ -2,11 +2,8 @@
 #include "input.h"
 #include "game.h"
 
-#include <fcntl.h>
-#include <linux/input.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <sys/select.h>
 #include <termios.h>
 #include <unistd.h>
 

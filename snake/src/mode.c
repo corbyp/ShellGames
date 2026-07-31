@@ -9,11 +9,14 @@
 #define MAX_SCORE 100
 
 static Entity player[MAX_SCORE] = {
-    {0, 0, RIGHT, '@', true, true},
+    {0, 0, RIGHT, '>', true, true},
 };
 static Entity coin = {0, 0, NONE, 'o', true, true};
 
 static uint8_t score = 0;
+
+static double move_cooldown = 0.15;
+static double move_timer = 0.0;
 
 void move_trail(int prev_x, int prev_y) {
   for (int i = score; i > 1; --i) {
@@ -25,16 +28,25 @@ void move_trail(int prev_x, int prev_y) {
   player[1].y = prev_y;
 }
 
-bool w = false;
-bool a = false;
-bool s = false;
-bool d = false;
-
-void input_hook(int keys[], int size) {
-  w = keys[17];
-  a = keys[30];
-  s = keys[31];
-  d = keys[32];
+void input_hook(char c) {
+  switch (c) {
+  case 'w':
+    player[0].direction = UP;
+    player[0].icon = '^';
+    break;
+  case 'a':
+    player[0].direction = LEFT;
+    player[0].icon = '<';
+    break;
+  case 's':
+    player[0].direction = DOWN;
+    player[0].icon = 'v';
+    break;
+  case 'd':
+    player[0].direction = RIGHT;
+    player[0].icon = '>';
+    break;
+  }
 }
 
 void move_coin(int rows, int cols) {
@@ -55,41 +67,17 @@ bool trail_collision(void) {
   return false;
 }
 
-void process(Game *game) {
+void update(Game *game) {
   printf("score: %d\n", score);
   printf("time: %d seconds\n", (*game).timer);
   printf("x: %d y: %d\n", coin.x, coin.y);
   static int prev_x;
   static int prev_y;
 
-  if ((*game).loop_delta % 20 == 0) {
-    if (w) {
-      if (player[0].direction != DOWN) {
-        player[0].icon = '^';
-        player[0].direction = UP;
-      }
-    }
+  move_timer += (*game).time_delta;
 
-    if (a) {
-      if (player[0].direction != RIGHT) {
-        player[0].icon = '<';
-        player[0].direction = LEFT;
-      }
-    }
-
-    if (s) {
-      if (player[0].direction != UP) {
-        player[0].icon = 'v';
-        player[0].direction = DOWN;
-      }
-    }
-
-    if (d) {
-      if (player[0].direction != LEFT) {
-        player[0].icon = '>';
-        player[0].direction = RIGHT;
-      }
-    }
+  if (move_timer >= move_cooldown) {
+    move_timer -= move_cooldown;
 
     prev_x = player[0].x;
     prev_y = player[0].y;
@@ -102,17 +90,17 @@ void process(Game *game) {
       return;
     }
 
-    move_trail(prev_x, prev_y);
-  }
-
-  if (collide(&player[0], &coin)) {
-    move_coin((*game).rows, (*game).cols);
-    if (score < MAX_SCORE - 1) {
-      player[score + 1] =
-          (Entity){player[score].x, player[score].y, NONE, 'O', true, true};
-      add_entity(&player[score + 1]);
+    if (collide(&player[0], &coin)) {
+      move_coin((*game).rows, (*game).cols);
+      if (score < MAX_SCORE - 1) {
+        player[score + 1] =
+            (Entity){player[score].x, player[score].y, NONE, 'O', true, true};
+        add_entity(&player[score + 1]);
+      }
+      ++score;
     }
-    ++score;
+
+    move_trail(prev_x, prev_y);
   }
 }
 

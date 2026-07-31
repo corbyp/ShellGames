@@ -10,6 +10,8 @@ static const uint8_t score_limit = 10;
 static Entity player = {0, 0, NONE, '@', true, true};
 static Entity coin = {0, 0, NONE, 'o', true, true};
 static uint8_t score = 0;
+static double move_cooldown = 0.15;
+static double move_timer = 0.0;
 
 void input_hook(char c) {
   switch (c) {
@@ -26,7 +28,6 @@ void input_hook(char c) {
     player.direction = RIGHT;
     break;
   }
-  safe_move(&player);
 }
 
 void move_coin(int rows, int cols) {
@@ -34,16 +35,23 @@ void move_coin(int rows, int cols) {
   coin.x = rand() % cols;
 }
 
-void process(Game *game) {
+void update(Game *game) {
   printf("score: %d / %d\n", score, score_limit);
   printf("time: %d seconds\n", (*game).timer);
 
-  if (score >= score_limit)
-    stop();
+  move_timer += (*game).time_delta;
 
-  if (collide(&player, &coin)) {
-    move_coin((*game).rows, (*game).cols);
-    ++score;
+  if (move_timer >= move_cooldown) {
+    move_timer -= move_cooldown;
+    safe_move(&player);
+
+    if (score >= score_limit)
+      stop();
+
+    if (collide(&player, &coin)) {
+      move_coin((*game).rows, (*game).cols);
+      ++score;
+    }
   }
 }
 

@@ -37,7 +37,7 @@ valgrind:
 
 # general
 clean:
-	rm -rf .cache $(TARGET)
+	rm -rf .cache bin/*
 
 run: compile exec clean
 drun: dcompile gdb clean

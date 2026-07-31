@@ -1,7 +1,7 @@
 #pragma once
 
 typedef struct Game {
-  int loop_delta;
+  double time_delta;
   int timer;
 
   int rows;

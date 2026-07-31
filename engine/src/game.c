@@ -10,10 +10,13 @@
 #include <string.h>
 #include <unistd.h>
 
+extern void input_hook(char c);
+
 static bool running = true;
 static bool verbose = false;
+static double move_timer = 0.0;
 
-static Game game = {.loop_delta = 0,
+static Game game = {.time_delta = 0,
                     .timer = 0,
                     .rows = 21,
                     .cols = 41,
@@ -29,7 +32,7 @@ static Game game = {.loop_delta = 0,
 
 // user defined
 extern void setup(Game *game);
-extern void process(Game *game);
+extern void update(Game *game);
 extern void teardown(Game *game);
 
 void add_entities(char arr[game.rows][game.cols + 1]) {
@@ -96,6 +99,22 @@ void fix_fps(long elapsed) {
   // there is a loop every 10 ms which equivilates to 100 loops / s
 }
 
+void handle_input(void) {
+  char c = 0;
+  getch(&c);
+
+  switch (c) {
+  case 'q':
+    stop();
+    break;
+  case 'v':
+    toggle_verbose();
+    break;
+  }
+
+  input_hook(c);
+}
+
 // external api
 
 // game loop
@@ -104,29 +123,32 @@ void game_loop(void) {
 
   char arr[game.rows][game.cols + 1];
   set_bounds(0, game.rows, 0, game.cols);
-  struct timespec start, end;
+  struct timespec prev, cur;
+  clock_gettime(CLOCK_MONOTONIC, &prev);
   time_t now = time(0);
 
   while (running) {
-    clock_gettime(CLOCK_MONOTONIC, &start);
     printf("\e[H\e[J"); // deletes previous frame
 
-    game.loop_delta =
-        (game.loop_delta + 1) % 1000; // resets every 1000th loop or every ms
+    // game.loop_delta =
+    //     (game.loop_delta + 1) % 1000; // resets every 1000th loop or every ms
     game.timer = time(0) - now;
+    move_timer += game.time_delta;
 
-    process(&game);
+    handle_input();
+    update(&game);
 
     fill_grid(arr, game.background);
     add_entities(arr);
 
     draw_grid(arr);
 
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    long elapsed = (end.tv_sec - start.tv_sec) * 1000000 +
-                   (end.tv_nsec - start.tv_nsec) / 1000;
-    draw_verbose(elapsed);
-    fix_fps(elapsed);
+    clock_gettime(CLOCK_MONOTONIC, &cur);
+    draw_verbose(game.time_delta);
+    game.time_delta =
+        (cur.tv_sec - prev.tv_sec) + (cur.tv_nsec - prev.tv_nsec) / 1e9;
+    prev = cur;
+    fix_fps(game.time_delta);
   }
 
   teardown(&game);
@@ -135,14 +157,15 @@ void game_loop(void) {
 // start stop
 
 void start(void) {
+  enable_raw_mode();
   printf("\e[?25l");
-  pthread_t input;
-  pthread_create(&input, NULL, input_loop, NULL);
+  // pthread_t input;
+  // pthread_create(&input, NULL, input_loop, NULL);
 
   game_loop();
 
-  pthread_cancel(input);
-  pthread_join(input, NULL);
+  // pthread_cancel(input);
+  // pthread_join(input, NULL);
 }
 
 void stop(void) {

@@ -9,6 +9,8 @@
 
 static int score = 0;
 static int count = 0;
+static double move_cooldown = 0.15;
+static double move_timer = 0.0;
 
 Entity player = {0, 0, NONE, '@', true, true};
 Entity enemies[MAX_ENEMIES];
@@ -37,25 +39,28 @@ void teardown(Game *game) {
   printf("You scored %d points in %d seconds\n", score, (*game).timer);
 }
 
-void process(Game *game) {
+void update(Game *game) {
   printf("score: %d\n", score);
   printf("timer: %d\n", (*game).timer);
 
-  if ((*game).loop_delta % 5 == 0) {
-    move_enemies((*game).cols);
-  }
+  move_timer += (*game).time_delta;
+  safe_move(&player);
 
-  if ((*game).loop_delta % 60 == 0) {
+  if (move_timer >= move_cooldown) {
+    move_timer -= move_cooldown;
+    move_enemies((*game).cols);
+
     if (count < MAX_ENEMIES) {
-      enemies[count] = (Entity){rand() % ((*game).cols - 1), 0, DOWN, 'o', true, true};
+      enemies[count] =
+          (Entity){rand() % ((*game).cols - 1), 0, DOWN, 'o', true, true};
       add_entity(&enemies[count]);
       count++;
     }
-  }
 
-  for (int i = 0; i < count; ++i) {
-    if (collide(&enemies[i], &player)) {
-      stop();
+    for (int i = 0; i < count; ++i) {
+      if (collide(&enemies[i], &player)) {
+        stop();
+      }
     }
   }
 }
@@ -72,6 +77,4 @@ void input_hook(char c) {
     player.direction = NONE;
     break;
   }
-
-  safe_move(&player);
 }

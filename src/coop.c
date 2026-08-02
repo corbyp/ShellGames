@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 static double tickrate = 0.33;
-static double move_timer = 0.0;
+static double td_acc = 0.0;
 Entity local = {.x = 0, .y = 0, NONE, '@', true, true};
 Entity remote = {.x = 0, .y = 0, NONE, 'C', true, true};
 Packet packet;
@@ -33,10 +33,12 @@ void input_hook(char c) {
 }
 
 void update(Game *game) {
-  move_timer += (*game).time_delta;
+  td_acc += (*game).time_delta;
 
-  if (move_timer >= tickrate) {
-    move_timer -= tickrate;
+  if (td_acc >= tickrate) {
+    td_acc -= tickrate;
+
+    safe_move(&local);
 
     if ((*game).server) {
       poll_server(&packet);
@@ -56,8 +58,6 @@ void update(Game *game) {
     } else if ((*game).client) {
       push_client(packet);
     }
-
-    safe_move(&local);
   }
 }
 

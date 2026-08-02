@@ -10,7 +10,7 @@ CFLAGS_RELEASE = $(CFLAGS) -O2 -DNDEBUG
 CFLAGS_DEBUG = $(CFLAGS) -g -O0
 CFLAGS_SANITIZE = $(CFLAGS) -fsanitize=address,undefined,leak -g
 
-.PHONY: all run drun srun compile dcompile scompile exec gdb valgrind clean $(GAMES)
+.PHONY: all run drun srun compile dcompile scompile exec gdb valgrind clean $(GAMES) coop
 
 all: run
 

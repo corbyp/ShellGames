@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-static double move_cooldown = 0.15;
+static double tickrate = 0.15;
 static double move_timer = 0.0;
 Entity local = {.x = 0, .y = 0, NONE, '@', true, true};
 Entity remote = {.x = 0, .y = 0, NONE, 'C', true, true};
@@ -35,28 +35,28 @@ void input_hook(char c) {
 void update(Game *game) {
   move_timer += (*game).time_delta;
 
-  if (move_timer >= move_cooldown) {
-    move_timer -= move_cooldown;
+  if (move_timer >= tickrate) {
+    move_timer -= tickrate;
+
     safe_move(&local);
-  }
+    if ((*game).server) {
+      poll_server(&packet);
+    } else if ((*game).client) {
+      poll_client(&packet);
+    }
 
-  if ((*game).server) {
-    poll_server(&packet);
-  } else if ((*game).client) {
-    poll_client(&packet);
-  }
+    remote.x = packet.x;
+    remote.y = packet.y;
+    remote.icon = packet.icon;
+    packet.x = local.x;
+    packet.y = local.y;
+    packet.icon = local.icon;
 
-  remote.x = packet.x;
-  remote.y = packet.y;
-  remote.icon = packet.icon;
-  packet.x = local.x;
-  packet.y = local.y;
-  packet.icon = local.icon;
-
-  if ((*game).server) {
-    push_server(packet);
-  } else if ((*game).client) {
-    push_client(packet);
+    if ((*game).server) {
+      push_server(packet);
+    } else if ((*game).client) {
+      push_client(packet);
+    }
   }
 }
 

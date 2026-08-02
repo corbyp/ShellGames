@@ -15,10 +15,12 @@ typedef struct Game {
   char top_right;
   char bottom_left;
   char bottom_right;
-
   char background;
+
+  int client;
+  int server;
 } Game;
 
-void start(void);
+void start(int client, int server);
 void stop(void);
 void toggle_verbose(void);

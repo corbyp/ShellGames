@@ -14,6 +14,9 @@ CFLAGS_SANITIZE = $(CFLAGS) -fsanitize=address,undefined,leak -g
 
 all: run
 
+coop: coop/src/game.c
+	$(CC) $(CFLAGS) coop/src/game.c $(ENGINE_FILES) -o bin/coop.bin
+
 # production
 compile:
 	$(CC) $(CFLAGS_RELEASE) $(GAME_FILES) $(ENGINE_FILES) -o bin/$(TARGET)

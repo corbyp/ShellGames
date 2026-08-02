@@ -28,7 +28,9 @@ static Game game = {.time_delta = 0,
                     .top_right = '#',
                     .bottom_left = '#',
                     .bottom_right = '#',
-                    .background = ' '};
+                    .background = ' ',
+                    .client = 0,
+                    .server = 0};
 
 // user defined
 extern void setup(Game *game);
@@ -156,16 +158,14 @@ void game_loop(void) {
 
 // start stop
 
-void start(void) {
+void start(int client, int server) {
   enable_raw_mode();
   printf("\e[?25l");
-  // pthread_t input;
-  // pthread_create(&input, NULL, input_loop, NULL);
 
+  game.client = client;
+  game.server = server;
+  
   game_loop();
-
-  // pthread_cancel(input);
-  // pthread_join(input, NULL);
 }
 
 void stop(void) {

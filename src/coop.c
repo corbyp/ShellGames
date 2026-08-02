@@ -35,16 +35,16 @@ void input_hook(char c) {
 void update(Game *game) {
   td_acc += (*game).time_delta;
 
+  if ((*game).server) {
+    poll_server(&packet);
+  } else if ((*game).client) {
+    poll_client(&packet);
+  }
+
   if (td_acc >= tickrate) {
     td_acc -= tickrate;
 
     safe_move(&local);
-
-    if ((*game).server) {
-      poll_server(&packet);
-    } else if ((*game).client) {
-      poll_client(&packet);
-    }
 
     remote.x = packet.x;
     remote.y = packet.y;

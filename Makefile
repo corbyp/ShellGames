@@ -1,25 +1,22 @@
-ENGINE_INCLUDE = engine/include
-ENGINE_FILES = $(wildcard engine/src/*.c)
+INCLUDE = include
+ENGINE_FILES = $(wildcard src/engine/*.c)
 
-GAMES := evader collector snake jnr
-GAME_FILES = $(wildcard $(GAME)/src/*.c)
-TARGET = $(GAME)d
+GAMES := evader collector snake jnr coop
+GAME_FILES = src/$(GAME).c
+TARGET = bin/$(GAME)
 
-CFLAGS = -I$(ENGINE_INCLUDE) -Wall -Wextra
+CFLAGS = -I$(INCLUDE) -Wall -Wextra
 CFLAGS_RELEASE = $(CFLAGS) -O2 -DNDEBUG
 CFLAGS_DEBUG = $(CFLAGS) -g -O0
 CFLAGS_SANITIZE = $(CFLAGS) -fsanitize=address,undefined,leak -g
 
-.PHONY: all run drun srun compile dcompile scompile exec gdb valgrind clean $(GAMES) coop
+.PHONY: all run drun srun compile dcompile scompile exec gdb valgrind clean $(GAMES)
 
 all: run
 
-coop: coop/src/game.c
-	$(CC) $(CFLAGS) coop/src/game.c $(ENGINE_FILES) -o bin/coop.bin
-
 # production
 compile:
-	$(CC) $(CFLAGS_RELEASE) $(GAME_FILES) $(ENGINE_FILES) -o bin/$(TARGET)
+	$(CC) $(CFLAGS_RELEASE) $(GAME_FILES) $(ENGINE_FILES) -o $(TARGET)
 
 exec:
 	bin/$(TARGET)
@@ -44,13 +41,16 @@ clean:
 
 run: compile exec clean
 drun: dcompile gdb clean
-srun: scompile clean
+srun: scompile valgrind clean
 
 $(GAMES):
 	$(MAKE) run GAME=$@
 
-build-%:
+c-%:
 	$(MAKE) compile GAME=$*
 
-san-%:
+s-%:
 	$(MAKE) srun GAME=$*
+
+d-%:
+	$(MAKE) drun GAME=$*

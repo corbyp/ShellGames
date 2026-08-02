@@ -1,5 +1,5 @@
+#include "engine.h"
 #include "entity.h"
-#include "game.h"
 
 #include <stdbool.h>
 #include <stdint.h>

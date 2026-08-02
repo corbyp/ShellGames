@@ -1,4 +1,4 @@
-#include "game.h"
+#include "engine.h"
 #include "entity.h"
 #include "input.h"
 
@@ -130,10 +130,9 @@ void game_loop(void) {
   time_t now = time(0);
 
   while (running) {
+    clock_gettime(CLOCK_MONOTONIC, &cur);
     printf("\e[H\e[J"); // deletes previous frame
 
-    // game.loop_delta =
-    //     (game.loop_delta + 1) % 1000; // resets every 1000th loop or every ms
     game.timer = time(0) - now;
     move_timer += game.time_delta;
 
@@ -145,7 +144,6 @@ void game_loop(void) {
 
     draw_grid(arr);
 
-    clock_gettime(CLOCK_MONOTONIC, &cur);
     draw_verbose(game.time_delta);
     game.time_delta =
         (cur.tv_sec - prev.tv_sec) + (cur.tv_nsec - prev.tv_nsec) / 1e9;

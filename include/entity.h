@@ -23,9 +23,12 @@ typedef struct Entity {
 } Entity;
 
 void move_entity(Entity *entity);
-bool safe_move(Entity *entity);
+bool move(Entity *entity);
 void set_bounds(int top, int bottom, int left, int right);
 bool collide(Entity *entity1, Entity *entity2);
+bool will_collide(Entity *entity1, Entity *entity2);
 void add_entity(Entity *entity);
-Entity get_entity(int index);
+Entity *get_entity(int index);
+Entity *get_col_entity(int index);
 int entity_count(void);
+int entity_col_count(void);

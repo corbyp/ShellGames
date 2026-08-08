@@ -37,10 +37,15 @@ extern void setup(Game *game);
 extern void update(Game *game);
 extern void teardown(Game *game);
 
-void add_entities(char arr[game.rows][game.cols + 1]) {
+void draw_entities(char arr[game.rows][game.cols + 1]) {
   for (int i = 0; i < entity_count(); ++i) {
-    Entity cur_entity = get_entity(i);
-    arr[cur_entity.y][cur_entity.x] = cur_entity.icon;
+    Entity entity = *get_entity(i);
+    arr[entity.y][entity.x] = entity.icon;
+  }
+  
+  for (int i = 0; i < entity_col_count(); ++i) {
+    Entity entity = *get_col_entity(i);
+    arr[entity.y][entity.x] = entity.icon;
   }
 }
 
@@ -140,7 +145,7 @@ void game_loop(void) {
     update(&game);
 
     fill_grid(arr, game.background);
-    add_entities(arr);
+    draw_entities(arr);
 
     draw_grid(arr);
 

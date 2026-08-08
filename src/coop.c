@@ -1,6 +1,6 @@
 #include "engine.h"
 #include "entity.h"
-#include "server.h"
+#include "e2e.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -9,7 +9,7 @@ static double tickrate = 0.15;
 static double td_acc = 0.0;
 Entity local = {.x = 0,
                 .y = 0,
-                .direction = NONE,
+                .direction = DOWN,
                 .icon = '@',
                 .collision = true,
                 .visible = true};
@@ -62,7 +62,7 @@ void update(Game *game) {
   if (td_acc >= tickrate) {
     td_acc -= tickrate;
 
-    safe_move(&local);
+    move(&local);
     pos_changed = local.direction != NONE;
   }
 

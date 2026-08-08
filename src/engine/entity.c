@@ -1,7 +1,9 @@
 #include "entity.h"
+#include <unistd.h>
 
 static Entity *entities[MAX_ENTITIES];
-static int count = 0;
+static Entity *col_entities[MAX_ENTITIES];
+static int count = 0, col_count = 0;
 static int LEFT_BOUND, TOP_BOUND;
 static int RIGHT_BOUND, BOTTOM_BOUND;
 
@@ -12,71 +14,74 @@ void set_bounds(int top, int bottom, int left, int right) {
   RIGHT_BOUND = right;
 }
 
-void move(Entity *entity) {
-  switch ((*entity).direction) {
+bool move(Entity *entity) {
+  Entity temp = *entity;
+
+  switch (temp.direction) {
   case UP:
-    (*entity).y--;
+    temp.y--;
     break;
 
   case DOWN:
-    (*entity).y++;
+    temp.y++;
     break;
 
   case LEFT:
-    (*entity).x--;
+    temp.x--;
     break;
 
   case RIGHT:
-    (*entity).x++;
+    temp.x++;
     break;
 
   case NONE:
-    break;
+    return false;
   }
-}
 
-bool safe_move(Entity *entity) {
-  switch ((*entity).direction) {
-  case UP:
-    if ((*entity).y <= TOP_BOUND)
-      return true;
-    (*entity).y--;
-    break;
-
-  case DOWN:
-    if ((*entity).y >= BOTTOM_BOUND - 1)
-      return true;
-    (*entity).y++;
-    break;
-
-  case LEFT:
-    if ((*entity).x <= LEFT_BOUND)
-      return true;
-    (*entity).x--;
-    break;
-
-  case RIGHT:
-    if ((*entity).x >= RIGHT_BOUND - 1)
-      return true;
-
-    (*entity).x++;
-    break;
-
-  case NONE:
-    break;
+  if (temp.y < TOP_BOUND || temp.y >= BOTTOM_BOUND ||
+      temp.x < LEFT_BOUND || temp.x >= RIGHT_BOUND) {
+    return true;
   }
+
+  for (int i = 0; i < col_count; ++i) {
+    Entity *other = get_col_entity(i);
+    if (other != entity && collide(&temp, other)) {
+      return true;
+    }
+  }
+
+  *entity = temp;
 
   return false;
 }
 
 void add_entity(Entity *entity) {
-  if (count < MAX_ENTITIES)
-    entities[count++] = entity;
+  if (count < MAX_ENTITIES) {
+    if ((*entity).collision)
+      col_entities[col_count++] = entity;
+    else
+      entities[count++] = entity;
+  }
 }
 
-Entity get_entity(int index) { return *entities[index]; }
+Entity *get_entity(int index) {
+  if (index < count) {
+    return entities[index];
+  }
+
+  return NULL;
+}
+
+Entity *get_col_entity(int index) {
+  if (index < col_count) {
+    return col_entities[index];
+  }
+
+  return NULL;
+}
 
 int entity_count(void) { return count; }
+int entity_col_count(void) { return col_count; }
 
 bool collide(Entity *entity1, Entity *entity2) {
   if ((*entity1).collision && (*entity2).collision &&

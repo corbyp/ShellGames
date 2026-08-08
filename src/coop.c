@@ -80,11 +80,9 @@ void update(Game *game) {
 }
 
 void setup(Game *game) {
-  (void)game;
-
   if ((*game).client) {
     printf("Starting remote...\n");
-    start_client();
+    start_client((*game).server_ip);
     sleep(1);
   } else if ((*game).server) {
     printf("Starting server...\n");

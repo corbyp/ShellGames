@@ -7,7 +7,7 @@ typedef struct Packet {
 } Packet;
 
 int start_server(void);
-int start_client(void);
+int start_client(char *server_ip);
 
 int stop_comms(void);
 

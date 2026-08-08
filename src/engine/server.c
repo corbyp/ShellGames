@@ -63,7 +63,7 @@ int start_server(void) {
   return 0;
 }
 
-int start_client(void) {
+int start_client(char *ip_addr) {
   int ret, n;
   char buf[100];
 
@@ -73,8 +73,7 @@ int start_client(void) {
   }
 
   server_addr.sin_family = AF_INET;
-  // server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-  server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  server_addr.sin_addr.s_addr = inet_addr(ip_addr);
   server_addr.sin_port = htons(1337);
 
   if ((ret = connect(fd, (struct sockaddr *)&server_addr,

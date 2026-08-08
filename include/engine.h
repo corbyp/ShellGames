@@ -19,8 +19,9 @@ typedef struct Game {
 
   int client;
   int server;
+  char *server_ip;
 } Game;
 
-void start(int client, int server);
+void start(Game game);
 void stop(void);
 void toggle_verbose(void);

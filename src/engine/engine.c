@@ -156,12 +156,13 @@ void game_loop(void) {
 
 // start stop
 
-void start(int client, int server) {
+void start(Game _game) {
   enable_raw_mode();
   printf("\e[?25l");
 
-  game.client = client;
-  game.server = server;
+  game.client = _game.client;
+  game.server = _game.server;
+  game.server_ip = _game.server_ip;
   
   game_loop();
 }

@@ -74,7 +74,7 @@ int start_client(void) {
 
   server_addr.sin_family = AF_INET;
   // server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-  server_addr.sin_addr.s_addr = inet_addr("192.168.178.10");
+  server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
   server_addr.sin_port = htons(1337);
 
   if ((ret = connect(fd, (struct sockaddr *)&server_addr,
@@ -116,16 +116,15 @@ int poll_server(Packet *packet) {
       ssize_t bytes_received =
           recvfrom(fd, buffer, sizeof(buffer), 0,
                    (struct sockaddr *)&client_addr, &client_len);
-      if (bytes_received  == sizeof(Packet)) {
+      if (bytes_received == sizeof(Packet)) {
         memcpy(packet, buffer, sizeof(Packet));
+        return 0;
       }
     }
   } else if (result < 0) {
     perror("poll error");
-    return -1;
   }
-
-  return 0;
+  return -1;
 }
 
 int poll_client(Packet *packet) {
@@ -140,14 +139,13 @@ int poll_client(Packet *packet) {
       ssize_t bytes_received = recv(fd, buffer, sizeof(buffer), 0);
       if (bytes_received == sizeof(Packet)) {
         memcpy(packet, buffer, sizeof(Packet));
+        return 0;
       }
     }
   } else if (result < 0) {
     perror("poll error");
-    return -1;
   }
-
-  return 0;
+  return -1;
 }
 
 int push_server(Packet packet) {

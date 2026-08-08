@@ -19,7 +19,7 @@ compile:
 	$(CC) $(CFLAGS_RELEASE) $(GAME_FILES) $(ENGINE_FILES) -o $(TARGET)
 
 exec:
-	bin/$(TARGET)
+	$(TARGET)
 
 # debug
 dcompile:
@@ -33,7 +33,7 @@ scompile:
 	$(CC) $(CFLAGS_SANITIZE) $(GAME_FILES) $(ENGINE_FILES) -o $(TARGET)
 
 valgrind:
-	valgrind ./$(TARGET)
+	valgrind $(TARGET)
 
 # general
 clean:

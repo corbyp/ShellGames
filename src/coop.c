@@ -5,10 +5,20 @@
 #include <stdio.h>
 #include <unistd.h>
 
-static double tickrate = 0.33;
+static double tickrate = 0.15;
 static double td_acc = 0.0;
-Entity local = {.x = 0, .y = 0, NONE, '@', true, true};
-Entity remote = {.x = 0, .y = 0, NONE, 'C', true, true};
+Entity local = {.x = 0,
+                .y = 0,
+                .direction = NONE,
+                .icon = '@',
+                .collision = true,
+                .visible = true};
+Entity remote = {.x = 0,
+                 .y = 0,
+                 .direction = NONE,
+                 .icon = 'R',
+                 .collision = true,
+                 .visible = true};
 Packet packet;
 
 void input_hook(char c) {
@@ -34,21 +44,29 @@ void input_hook(char c) {
 
 void update(Game *game) {
   td_acc += (*game).time_delta;
+  int recv = -1;
+  int pos_changed = 0;
 
   if ((*game).server) {
-    poll_server(&packet);
+    recv = poll_server(&packet);
   } else if ((*game).client) {
-    poll_client(&packet);
+    recv = poll_client(&packet);
+  }
+
+  if (recv == 0) {
+    remote.x = packet.x;
+    remote.y = packet.y;
+    // remote.icon = packet.icon;
   }
 
   if (td_acc >= tickrate) {
     td_acc -= tickrate;
 
     safe_move(&local);
+    pos_changed = local.direction != NONE;
+  }
 
-    remote.x = packet.x;
-    remote.y = packet.y;
-    remote.icon = packet.icon;
+  if (pos_changed) {
     packet.x = local.x;
     packet.y = local.y;
     packet.icon = local.icon;
@@ -74,8 +92,8 @@ void setup(Game *game) {
     sleep(1);
   }
 
-  add_entity(&local);
   add_entity(&remote);
+  add_entity(&local);
 }
 
 void teardown(Game *game) {

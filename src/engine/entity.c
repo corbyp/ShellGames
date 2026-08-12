@@ -14,7 +14,7 @@ void set_bounds(int top, int bottom, int left, int right) {
   RIGHT_BOUND = right;
 }
 
-bool move(Entity *entity) {
+Type move(Entity *entity) {
   Entity temp = *entity;
 
   switch (temp.direction) {
@@ -35,24 +35,24 @@ bool move(Entity *entity) {
     break;
 
   case NONE:
-    return false;
+    return DUMMY;
   }
 
   if (temp.y < TOP_BOUND || temp.y >= BOTTOM_BOUND ||
       temp.x < LEFT_BOUND || temp.x >= RIGHT_BOUND) {
-    return true;
+    return WALL;
   }
 
   for (int i = 0; i < col_count; ++i) {
     Entity *other = get_col_entity(i);
     if (other != entity && collide(&temp, other)) {
-      return true;
+      return (*other).type;
     }
   }
 
   *entity = temp;
 
-  return false;
+  return DUMMY;
 }
 
 void add_entity(Entity *entity) {

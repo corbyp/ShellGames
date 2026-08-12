@@ -5,27 +5,15 @@
 #include <stdio.h>
 #include <stdlib.h> // for rand
 
-#define MAX_ENEMIES 5000
+#define MAX_ENEMIES 100
 
 static int score = 0;
 static int count = 0;
 static double move_cooldown = 0.15;
 static double move_timer = 0.0;
 
-Entity player = {0, 0, NONE, '@', true, true};
+Entity player = {0, 0, '@', NONE, PLAYER, true, true};
 Entity enemies[MAX_ENEMIES];
-
-void move_enemies(int cols) {
-  for (int i = 0; i < count; ++i) {
-    bool wall_collision = safe_move(&enemies[i]);
-
-    if (wall_collision) {
-      score++;
-      enemies[i].y = 0;
-      enemies[i].x = rand() % (cols - 1);
-    }
-  }
-}
 
 // necessary definitions
 
@@ -43,24 +31,32 @@ void update(Game *game) {
   printf("score: %d\n", score);
   printf("timer: %d\n", (*game).timer);
 
-  move_timer += (*game).time_delta;
-  safe_move(&player);
+  move(&player);
 
+  move_timer += (*game).time_delta;
   if (move_timer >= move_cooldown) {
     move_timer -= move_cooldown;
-    move_enemies((*game).cols);
+
+    for (int i = 0; i < count; ++i) {
+      switch (move(&enemies[i])) {
+      case WALL:
+        enemies[i].x = rand() % ((*game).cols - 1);
+        enemies[i].y = 0;
+        break;
+      case PLAYER:
+        player.icon = 'X';
+        stop();
+        break;
+      default:
+        break;
+      }
+    }
 
     if (count < MAX_ENEMIES) {
       enemies[count] =
-          (Entity){rand() % ((*game).cols - 1), 0, DOWN, 'o', true, true};
+          (Entity){rand() % ((*game).cols - 1), 0, 'o', DOWN, ENEMY, true, true};
       add_entity(&enemies[count]);
       count++;
-    }
-
-    for (int i = 0; i < count; ++i) {
-      if (collide(&enemies[i], &player)) {
-        stop();
-      }
     }
   }
 }

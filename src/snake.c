@@ -9,11 +9,13 @@
 #define MAX_SCORE 100
 
 static Entity player[MAX_SCORE] = {
-    {0, 0, RIGHT, '>', true, true},
+    {0, 0, '>', RIGHT, PLAYER, true, true},
 };
-static Entity coin = {0, 0, NONE, 'o', true, true};
+static Entity coin = {0, 0, 'o', NONE, ITEM, true, true};
 
 static uint8_t score = 0;
+static Direction next_direction = RIGHT;
+static Direction last_direction = RIGHT;
 
 static double move_cooldown = 0.15;
 static double move_timer = 0.0;
@@ -29,42 +31,44 @@ void move_trail(int prev_x, int prev_y) {
 }
 
 void input_hook(char c) {
+  Direction requested;
+  char icon;
+
   switch (c) {
   case 'w':
-    player[0].direction = UP;
-    player[0].icon = '^';
+    requested = UP;
+    icon = '^';
     break;
   case 'a':
-    player[0].direction = LEFT;
-    player[0].icon = '<';
+    requested = LEFT;
+    icon = '<';
     break;
   case 's':
-    player[0].direction = DOWN;
-    player[0].icon = 'v';
+    requested = DOWN;
+    icon = 'v';
     break;
   case 'd':
-    player[0].direction = RIGHT;
-    player[0].icon = '>';
+    requested = RIGHT;
+    icon = '>';
     break;
+  default:
+    return;
   }
+
+  if ((requested == UP && last_direction == DOWN) ||
+      (requested == DOWN && last_direction == UP) ||
+      (requested == LEFT && last_direction == RIGHT) ||
+      (requested == RIGHT && last_direction == LEFT)) {
+    return;
+  }
+
+  next_direction = requested;
+  player[0].icon = icon;
 }
 
 void move_coin(int rows, int cols) {
   coin.y = rand() % rows;
   coin.x = rand() % cols;
-
-  // for (int i = 0; i < score; ++i) {
-  // }
-}
-
-bool trail_collision(void) {
-  if (score < 2)
-    return false;
-  for (int i = 1; i < score + 1; ++i)
-    if (collide(&player[0], &player[i]))
-      return true;
-
-  return false;
 }
 
 void update(Game *game) {
@@ -82,22 +86,34 @@ void update(Game *game) {
     prev_x = player[0].x;
     prev_y = player[0].y;
 
-    if (trail_collision() || safe_move(&player[0])) {
-      player[score + 1] =
-          (Entity){player[0].x, player[0].y, NONE, 'X', true, true};
-      add_entity(&player[score + 1]);
-      stop();
-      return;
-    }
+    player[0].direction = next_direction;
+    last_direction = next_direction;
 
-    if (collide(&player[0], &coin)) {
+    switch (move(&player[0])) {
+    case ITEM:
       move_coin((*game).rows, (*game).cols);
       if (score < MAX_SCORE - 1) {
-        player[score + 1] =
-            (Entity){player[score].x, player[score].y, NONE, 'O', true, true};
+        player[score + 1] = (Entity){player[score].x,
+                                     player[score].y,
+                                     'O',
+                                     NONE,
+                                     PLAYER,
+                                     true,
+                                     true};
         add_entity(&player[score + 1]);
       }
       ++score;
+      break;
+    case PLAYER:
+      player[0].icon = 'X';
+      stop();
+      return;
+    case WALL:
+      player[0].icon = 'X';
+      stop();
+      return;
+    default:
+      break;
     }
 
     move_trail(prev_x, prev_y);
